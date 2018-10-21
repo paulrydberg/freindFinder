@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Friend-Finder</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+
+    <style>
+        #mainAdjustments {
+        padding-left: 15%;
+        padding-right: 15%;
+        padding-top: 3%;
+        }
+
+        #weGotAfloater {
+        float: right;
+        }
+
+        #theQs {
+        text-align: center;
+        margin: auto;
+        border: 1px solid rgb(0, 0, 0);
+        padding: 15px;
+        }
+
+        .buttonEdit {
+        border: 1px solid rgb(0, 0, 0);
+        padding: 15px;
+        float: right;
+        }
+
+        .center {
+        text-align: center;
+        }
+
+        #bigger {
+        font-size: 6vh;
+        }
+    </style>
+
+    <!-- <link rel="stylesheet" href="css/main.css"> -->
+</head>
+
+<body>
+    <div class="col">
+        <div class="row" id="mainAdjustments">
+            <form>
+                <p id="weGotAfloater"><a href="/">Home</a></p>
+                <h2>We need your data please.</h2>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" class="form-control" id="name" placeholder="Your name here">
+                </div>
+                <div class="form-group">
+                    <label for="image">Selfie:</label>
+                    <input type="url" class="form-control" id="image" placeholder="Link to a selfie here.">
+                </div>
+
+                <br>
+                <div id="theQs">
+                    <p id="bigger">Some of life's questions...</p>
+
+                </div>
+                <br>
+
+                <button type="submit" class="btn btn-primary buttonEdit" id="submit">Submit</button>
+                <p class="center">
+                    <span><a href="/api/friends">Public API Link</a></span>
+                    <span> | <a href="https://github.com/paulrydberg">Project Repo</a></span>
+                </p>
+            </form>
+            <br>
+
+            <div id="modalBad" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"></button>
+                            <h4 class="modal-title">Friend finder won't work without your name and picture.</h4>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div id="showModal" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"></button>
+                        <h4 class="modal-title">You matched with...</h4>
+                    </div>
+                    <div class="modal-body" id="modalGood"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">X</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+    <!-- <script src="js/survey.js"></script> -->
+
+    <script>
+        const theAs = [
+            '1 (Strongly Disagree)',
+            '2 (Disagree)',
+            '3 (Neutral)',
+            '4 (Agree)',
+            '5 (Strongly Agree)'
+        ];
+
+        const theQs = [
+            `I have a student mentality when it comes to most things.`,
+            `There isn't anything I can't do.`,
+            `People say I'm a very patient person.`,
+            `Money is less important than spending time with people that make us happy.`,
+            `You can't judge a fish's intelligence by it's ability to climb a tree.`,
+            `The earth is round.`,
+            `We know what we know, know what we don't, dont know what we do, and don't know what we don't.`,
+            `Watching TV is a waste of time.`,
+            `If you can save someone time then you're saving them money.`,
+            `The US dollar will collapse in the next 10 years.`
+        ];
+
+        $(document).ready(() => {
+            const qSection = $('#theQs');
+
+            let x = 0;
+            theQs.forEach(Q => {
+                x++;
+                const singleQ = $('<div class="Q">');
+                let qNum = $('<h2>').text('Question: ' + x);
+                let qString = $('<h4>').text(Q);
+                const formGroup = $('<div class="dropDowns">');
+                const dropDown = $('<select class="form-control option">');
+                theAs.forEach(gotAns => {
+                    let option = $('<option>').text(gotAns);
+                    dropDown.append(option);
+                });
+                dropDown.attr('id', 'select' + x);
+                formGroup.append(dropDown);
+                singleQ.append(qNum, qString, formGroup);
+                qSection.append(singleQ);
+            });
+
+            $('#submit').on('click', e => {
+                e.preventDefault();
+
+                let name = $('#name').val();
+                let image = $('#image').val();
+
+                if (name.length > 0 && image.length > 0) {
+                    let scores = [];
+
+                    Object.keys($('.option')).forEach(key => {
+                        if (scores.length < theQs.length) {
+                            scores.push($('.option')[key].value.charAt(0));
+                        }
+                    });
+
+                    let addToAPI = {
+                        name: name,
+                        photo: image,
+                        answers: scores
+                    };
+
+                    $.post('/api/friends', addToAPI, newAns => {
+                        $('#modalGood').empty();
+                        $('#name').val('');
+                        $('#image').val('');
+
+                        newAns.forEach(matchedWith => {
+                            let matchedDiv = $('<div class="matchedWith">');
+                            let name = matchedWith.name;
+                            let image = matchedWith.photo;
+                            let showName = $('<h2>').text(name);
+                            let photo = $('<img>').attr('src', image);
+                            matchedDiv.append(showName, photo);
+
+                            $('#modalGood').append(matchedDiv);
+                        });
+
+                        if (newAns.length > 1) {
+                            $('.modal-title').text('Great minds think alike.');
+                        } else {
+                            $('.modal-title').text(`Here's your new friend!`);
+                        }
+
+                        $('#showModal').modal();
+                    });
+                } else {
+                    $('#modalBad').modal();
+                }
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>
